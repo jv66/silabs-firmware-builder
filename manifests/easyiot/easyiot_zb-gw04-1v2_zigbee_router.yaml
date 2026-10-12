@@ -8,7 +8,7 @@ toolchain: "gcc:14.2.1"
 gbl:
   fw_type: zigbee_router
   baudrate: 115200
-  fw_variant: no_flow
+  fw_variant: hw_flow
 
 add_components:
   # BOOT
@@ -18,7 +18,12 @@ add_components:
 
 c_defines:
   SL_IOSTREAM_USART_VCOM_BAUDRATE: 115200
-  SL_IOSTREAM_USART_VCOM_FLOW_CONTROL_TYPE: usartHwFlowControlNone
+  # v1.2 wires CTS/RTS to the CH340 (that is the whole point of the v1.2 revision).
+  # With no flow control the EFR32's RTS pin is left undriven, the CH340's CTS input
+  # never sees "clear to send", and the CH340 stops forwarding host->device bytes:
+  # the app prints on the CLI but never receives any input (and --bootloader-reset
+  # rts_dtr/baudrate can never work). Mirror the NCP config instead.
+  SL_IOSTREAM_USART_VCOM_FLOW_CONTROL_TYPE: usartHwFlowControlCtsAndRts
 
   SL_IOSTREAM_USART_VCOM_PERIPHERAL: USART0
   SL_IOSTREAM_USART_VCOM_PERIPHERAL_NO: 0
@@ -29,11 +34,11 @@ c_defines:
   SL_IOSTREAM_USART_VCOM_RX_PORT: SL_GPIO_PORT_B
   SL_IOSTREAM_USART_VCOM_RX_PIN: 0
 
-  SL_IOSTREAM_USART_VCOM_CTS_PORT: 0
-  SL_IOSTREAM_USART_VCOM_CTS_PIN: 0
+  SL_IOSTREAM_USART_VCOM_CTS_PORT: SL_GPIO_PORT_D
+  SL_IOSTREAM_USART_VCOM_CTS_PIN: 3
 
-  SL_IOSTREAM_USART_VCOM_RTS_PORT: 0
-  SL_IOSTREAM_USART_VCOM_RTS_PIN: 0
+  SL_IOSTREAM_USART_VCOM_RTS_PORT: SL_GPIO_PORT_D
+  SL_IOSTREAM_USART_VCOM_RTS_PIN: 4
 
   SL_SIMPLE_BUTTON_BTN1_MODE: SL_SIMPLE_BUTTON_MODE_INTERRUPT
   SL_SIMPLE_BUTTON_BTN1_PORT: SL_GPIO_PORT_A
